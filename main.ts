@@ -29,3 +29,42 @@ ScriptApp.onStart.Add(function () {
     ScriptMap.putObject(10, 10, trash, {overlap: true});
     ScriptMap.putObject(20, 20, trash, {overlap: true});
 });
+
+let _players = ScriptApp.players;
+ScriptApp.onJoinPlayer.Add(function (p) {
+    p.tag = {
+        sturn: false,
+        sTime: 2,
+    };
+    _players = ScriptApp.players;
+});
+
+ScriptApp.onUnitAttacked.Add(function (sender, x, y, target){
+    if(!target.tag.sturn){
+        target.tag.sturn = true;
+        target.moveSpeed = 0;
+        target.sendUpdated();
+    }
+})
+
+ScriptApp.onUpdate.Add(function (dt) {
+    for(let i in _players){
+        let p = _players[i];
+        if(p.tag.sturn){
+            p.tag.sTime -= dt;
+            if(p.tag.sTime <=0){
+                p.tag.sturn = false;
+                p.tag.sTime = 2;
+                p.moveSpeed = 80;
+                p.sendUpdated();
+            }
+        }
+    }
+});
+
+ScriptApp.onLeavePlayer.Add(function (p) {
+    p.moveSpeed = 80;
+    p.sendUpdated();
+    _players = ScriptApp.players;
+})
+
