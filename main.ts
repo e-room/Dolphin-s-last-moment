@@ -5,7 +5,7 @@
 import "zep-script";
 
 // load sprite
-let poop = ScriptApp.loadSpritesheet('poop.png', 48, 43, [0], 16);
+let trash = ScriptApp.loadSpritesheet('poop.png', 48, 43, [0], 16);
 
 // load sprite
 let tomb = ScriptApp.loadSpritesheet('tomb.png', 32, 48, {
@@ -28,7 +28,7 @@ let _levelAddTimer = 0;
 let _start = false;
 let _timer = 90;
 
-let _poops = [];
+let _trashs = [];
 let _stateTimer = 0;
 
 let _genTime = 0;
@@ -75,9 +75,9 @@ function startState(state)
             ScriptApp.showCenterLabel("Game Start");
             break;
         case STATE_JUDGE:
-            for(let i in _poops) {
-                let b = _poops[i];
-                ScriptMap.putObject(b[0], b[1], null);
+            for(let i in _trashs) {
+                let b = _trashs[i];
+                ScriptMap.putObject(b[1], b[0], null);
             }
             break;
         case STATE_END:
@@ -181,9 +181,9 @@ ScriptApp.onObjectTouched.Add(function(sender, x, y, tileID) {
 // when the game block is pressed event
 // 게임 블록을 밟았을 때 호출되는 이벤트
 ScriptApp.onDestroy.Add(function() {
-    for(let i in _poops) {
-        let b = _poops[i];
-        ScriptMap.putObject(b[0], b[1], null);
+    for(let i in _trashs) {
+        let b = _trashs[i];
+        ScriptMap.putObject(b[1], b[0], null);
     }
 });
 
@@ -198,7 +198,7 @@ ScriptApp.onUpdate.Add(function(dt) {
     switch(_state)
     {
         case STATE_INIT:
-            ScriptApp.showCenterLabel(`Avoid falling poop.`);
+            ScriptApp.showCenterLabel(`돌고래를 살려줘!!`);
 
             if(_stateTimer >= 5)
             {
@@ -206,7 +206,7 @@ ScriptApp.onUpdate.Add(function(dt) {
             }
             break;
         case STATE_READY:
-            ScriptApp.showCenterLabel(`The game will start soon.`);
+            ScriptApp.showCenterLabel(`곧 시작됩니다!`);
 
             if(_stateTimer >= 3)
             {
@@ -218,11 +218,11 @@ ScriptApp.onUpdate.Add(function(dt) {
             if(_genTime <= 0) {
                 _genTime = Math.random() * (0.5 - (_level * 0.05));
 
-                let b = [Math.floor(ScriptMap.width * Math.random()),-1];
+                let b = [Math.floor(ScriptMap.height * Math.random()),-1];
 
-                _poops.push(b);
+                _trashs.push(b);
                 if(b[1] >= 0)
-                    ScriptMap.putObject(b[0], b[1], poop, {
+                    ScriptMap.putObject(b[1], b[0], trash, {
                         overlap: true,
                     });
             }
@@ -231,22 +231,22 @@ ScriptApp.onUpdate.Add(function(dt) {
             if(_dropTime <= 0) {
                 _dropTime = Math.random() * (0.5 - (_level * 0.08));
 
-                for(let i in _poops) {
-                    let b = _poops[i];
-                    ScriptMap.putObject(b[0], b[1], null);
+                for(let i in _trashs) {
+                    let b = _trashs[i];
+                    ScriptMap.putObject(b[1], b[0], null);
 
                     b[1]++;
-                    if(b[1] < ScriptMap.height) {
-                        ScriptMap.putObject(b[0], b[1], poop, {
+                    if(b[1] < ScriptMap.width) {
+                        ScriptMap.putObject(b[1], b[0], trash, {
                             overlap: true,
                         });
                     }
                 }
 
-                for(let k = _poops.length - 1;k >= 0;--k) {
-                    let b = _poops[k];
-                    if(b[1] >= ScriptMap.height)
-                        _poops.splice(k, 1);
+                for(let k = _trashs.length - 1;k >= 0;--k) {
+                    let b = _trashs[k];
+                    if(b[1] >= ScriptMap.width)
+                        _trashs.splice(k, 1);
                 }
             }
 
