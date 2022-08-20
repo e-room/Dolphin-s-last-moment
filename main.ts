@@ -4,16 +4,22 @@
 
 import "zep-script";
 
-// load sprite
+/**
+ * Trash Objects
+ * 고대 : 나뭇가지
+ */
 let trash = ScriptApp.loadSpritesheet('poop.png', 48, 43, [0], 16);
+let branch = ScriptApp.loadSpritesheet('branch.png', 32, 32)
 
-// load sprite
 let tomb = ScriptApp.loadSpritesheet('tomb.png', 32, 48, {
     left: [0],  // defined base anim
     right: [0], // defined base anim
     up: [0],    // defined base anim
     down: [0],  // defined base anim
 });
+
+let dolphin = ScriptApp.loadSpritesheet('dolphin.png', 32, 32);
+
 
 const STATE_INIT = 3000;
 const STATE_READY = 3001;
@@ -28,7 +34,11 @@ let _levelAddTimer = 0;
 let _start = false;
 let _timer = 90;
 
+/**
+ * Trash Lists
+ */
 let _trashs = [];
+let _branchs = [];
 let _stateTimer = 0;
 
 let _genTime = 0;
@@ -55,6 +65,7 @@ function startScriptApp()
         // create and utilize option data using tags.
         p.tag = {
             alive : true,
+            life: 3// 생명 개수 세팅
         };
     }
 }
@@ -187,6 +198,63 @@ ScriptApp.onDestroy.Add(function() {
     }
 });
 
+/**
+ *
+ * @param dt
+ * @param trashType 쓰레기종류 문자열
+ * @param speed 속도
+ */
+function moveTrash(dt, trashType = 'trash', speed = 0.08) {
+    const trashList = `_${trashType}s`;
+    _genTime -= dt;
+    if(_genTime <= 0) {
+        _genTime = Math.random() * (0.5 - (_level * 0.05));
+
+        let b = [Math.floor(ScriptMap.height * Math.random()),-1];
+
+        eval(trashList).push(b);
+        if(b[1] >= 0)
+            ScriptMap.putObject(b[1], b[0], eval(trashType), { // put 쓰레기
+                overlap: true,
+            });
+    }
+
+    _dropTime -= dt;
+    if(_dropTime <= 0) {
+        _dropTime = Math.random() * (0.5 - (_level * speed)); // 속도 설정
+
+        for(let i in eval(trashList)) {
+            let b = eval(trashList)[i];
+            ScriptMap.putObject(b[1], b[0], null);
+
+            b[1]++;
+            if(b[1] < ScriptMap.width) {
+                ScriptMap.putObject(b[1], b[0], eval(trashType), { // put 쓰레기
+                    overlap: true,
+                });
+            }
+        }
+
+        for(let k = eval(trashList).length - 1;k >= 0;--k) {
+            let b = eval(trashList)[k];
+            if(b[1] >= ScriptMap.width)
+                eval(trashList).splice(k, 1);
+        }
+    }
+
+    _levelAddTimer += dt;
+    if(_levelAddTimer >= _levelTimer)
+    {
+        _level++;
+        _levelAddTimer = 0;
+
+        if(_level > 6)
+        {
+            _level = 6;
+        }
+    }
+}
+
 // called every 20ms
 // 20ms 마다 호출되는 업데이트
 // param1 : deltatime ( elapsedTime )
@@ -197,15 +265,20 @@ ScriptApp.onUpdate.Add(function(dt) {
     _stateTimer += dt;
     switch(_state)
     {
-        case STATE_INIT:
+        case STATE_INIT: // 게임 세팅
             ScriptApp.showCenterLabel(`돌고래를 살려줘!!`);
+            for(let i in _players) {
+                let p = _players[i];
+                p.sprite = dolphin;
+                p.sendUpdated();
+            }
 
             if(_stateTimer >= 5)
             {
                 startState(STATE_READY);
             }
             break;
-        case STATE_READY:
+        case STATE_READY: // 게임 시작
             ScriptApp.showCenterLabel(`곧 시작됩니다!`);
 
             if(_stateTimer >= 3)
@@ -213,56 +286,11 @@ ScriptApp.onUpdate.Add(function(dt) {
                 startState(STATE_PLAYING);
             }
             break;
-        case STATE_PLAYING:
-            _genTime -= dt;
-            if(_genTime <= 0) {
-                _genTime = Math.random() * (0.5 - (_level * 0.05));
-
-                let b = [Math.floor(ScriptMap.height * Math.random()),-1];
-
-                _trashs.push(b);
-                if(b[1] >= 0)
-                    ScriptMap.putObject(b[1], b[0], trash, {
-                        overlap: true,
-                    });
-            }
-
-            _dropTime -= dt;
-            if(_dropTime <= 0) {
-                _dropTime = Math.random() * (0.5 - (_level * 0.08));
-
-                for(let i in _trashs) {
-                    let b = _trashs[i];
-                    ScriptMap.putObject(b[1], b[0], null);
-
-                    b[1]++;
-                    if(b[1] < ScriptMap.width) {
-                        ScriptMap.putObject(b[1], b[0], trash, {
-                            overlap: true,
-                        });
-                    }
-                }
-
-                for(let k = _trashs.length - 1;k >= 0;--k) {
-                    let b = _trashs[k];
-                    if(b[1] >= ScriptMap.width)
-                        _trashs.splice(k, 1);
-                }
-            }
-
-            _levelAddTimer += dt;
-            if(_levelAddTimer >= _levelTimer)
-            {
-                _level++;
-                _levelAddTimer = 0;
-
-                if(_level > 6)
-                {
-                    _level = 6;
-                }
-            }
+        case STATE_PLAYING: // 게임 중
+            moveTrash(dt, 'trash', 0.08);
+            moveTrash(dt, 'branch', 0.2); // 0.08내외로 속도 조정하기
             break;
-        case STATE_JUDGE:
+        case STATE_JUDGE: // 결과 판정
             if(_live == 1)
             {
                 ScriptApp.showCenterLabel(`${lastSurvivor.name} is last suvivor`);
