@@ -52,6 +52,24 @@ let lastSurvivor;
 let _state;
 let _stateTImer;
 
+// 체력바 표시 함수
+function setHPgage(p, hp) {
+    switch (hp) {
+        case 3:
+            p.title = "▮▮▮";
+            break;
+        case 2:
+            p.title = "▮▮";
+            break;
+        case 1:
+            p.title = "▮";
+            break;
+        default:
+            p.title = null;
+            break;
+    }
+}
+
 function startScriptApp()
 {
     _start = true;
@@ -65,8 +83,13 @@ function startScriptApp()
         // create and utilize option data using tags.
         p.tag = {
             alive : true,
-            life: 3// 생명 개수 세팅
+            hp: 3, // 생명 개수 세팅
+            shield: false,
+            time: 1, // 부딪힌 후 1초간 무적 상태를 설정하기 위한 속성
         };
+
+        setHPgage(p, p.tag.hp);
+        p.sendUpdated();
     }
 }
 
@@ -131,12 +154,17 @@ ScriptApp.onJoinPlayer.Add(function(p) {
     {
         p.tag = {
             alive : false,
+            hp: 3,
+            shield: false,
+            time: 1
         };
 
         // change move speed
         p.moveSpeed = 20;
+
         // change sprite image
-        p.sprite = tomb;
+        // p.sprite = tomb;
+
         // when player property changed have to call this method
         // 플레이어 속성 변경 시 반드시 호출하여 업데이트 한다.
         p.sendUpdated();
@@ -158,35 +186,49 @@ ScriptApp.onLeavePlayer.Add(function(p) {
 // when player touched objects event
 // 플레이어가 오브젝트와 부딪혔을 때
 ScriptApp.onObjectTouched.Add(function(sender, x, y, tileID) {
-    if(!_start)
+    if(!_start) // 시작하지 않았을 때
         return;
 
-    if(!sender.tag.alive)
+    if(!sender.tag.alive) // 이미 죽은 플레이어 일 때
         return;
 
-    sender.tag.alive = false;
-    sender.sprite = tomb;
-    sender.moveSpeed = 40;
-    sender.sendUpdated();
+    if (sender.tag.alive && !sender.tag.shield) {
+        sender.tag.hp--;
 
-    _live = checkSuvivors();
-
-    if(_live == 1 || _live == 0)
-    {
-        startState(STATE_JUDGE);
-    }
-    else
-    {
-        if(_stateTimer >= 1)
-        {
-            _stateTimer = 0;
-            _timer--;
-            if(_timer <= 0)
-            {
-                startState(STATE_JUDGE);
-            }
+        if(sender.tag.hp == 0) {
+            sender.title = null;
+            sender.tag.alive = false;
+            sender.sprite = tomb;
+            sender.moveSpeed = 40;
+            sender.sendUpdated();
+        } else {
+            sender.tag.shield = true; // 부딪히면 1초간 무적이 됨
+            setHPgage(sender, sender.tag.hp);
+            sender.sendUpdated();
         }
     }
+
+
+    // _live = checkSuvivors();
+    //
+    // if(_live == 1 || _live == 0)
+    // {
+    //     startState(STATE_JUDGE);
+    // }
+    // else
+    // {
+    //     if(_stateTimer >= 1)
+    //     {
+    //         _stateTimer = 0;
+    //         _timer--;
+    //         if(_timer <= 0)
+    //         {
+    //             startState(STATE_JUDGE);
+    //         }
+    //     }
+    // }
+
+
 });
 
 // when the game block is pressed event
@@ -288,7 +330,23 @@ ScriptApp.onUpdate.Add(function(dt) {
             break;
         case STATE_PLAYING: // 게임 중
             moveTrash(dt, 'trash', 0.08);
-            moveTrash(dt, 'branch', 0.2); // 0.08내외로 속도 조정하기
+            moveTrash(dt, 'branch', 0.12); // 0.08내외로 속도 조정하기
+
+            for (let i in _players) {
+                let p = _players[i];
+
+                // 플레이어가 죽은 상태라면 건너뜀
+                if (!p.tag.alive) continue;
+
+                // 피격 후 1초가 지나면 shield 속성을 false로 변경
+                if (p.tag.shield) {
+                    p.tag.time -= dt;
+                    if (p.tag.time <= 0) {
+                        p.tag.shield = false;
+                        p.tag.time = 1; // shield 지속시간 1초로 초기화
+                    }
+                }
+            }
             break;
         case STATE_JUDGE: // 결과 판정
             if(_live == 1)
