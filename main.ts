@@ -4,11 +4,39 @@
 
 import "zep-script";
 
-
-const TRASH_GENERATE_LEVEL = 5; // 숫자가 높을수록 쓰레기의 양이 줄어듬 (실수)
 const TRASH_SPEED_LEVEL = 2; // 숫자가 높을수록 쓰레기의 이동속도가 느려짐 (정수)
+
+/**
+ * ANCIENT, MEDIEVAL, INDUST, MODERN
+ */
+let currentStageLevel = 'MODERN';
 let trashSpeedLevel = 1;
 
+/**
+ * 돌고래
+ */
+let dolphinThreeLife = ScriptApp.loadSpritesheet('dolphin-3life.png', 120, 80, {
+    left: [0, 1, 2, 3], // left 라는 이미 정해진 왼쪽 방향으로 걸을 때의 애니메이션 이름
+    up: [0, 1, 2, 3], // 그 이름에 쓰일 전체 파일에서의 인덱스 넘버들
+    down: [0, 1, 2, 3],
+    right: [0, 1, 2, 3],
+}, 8);
+
+let dolphinTwoLife = ScriptApp.loadSpritesheet('dolphin-2life.png', 120, 80, {
+    left: [0, 1, 2, 3], // left 라는 이미 정해진 왼쪽 방향으로 걸을 때의 애니메이션 이름
+    up: [0, 1, 2, 3], // 그 이름에 쓰일 전체 파일에서의 인덱스 넘버들
+    down: [0, 1, 2, 3],
+    right: [0, 1, 2, 3],
+}, 8);
+
+let dolphinOneLife = ScriptApp.loadSpritesheet('dolphin-1life.png', 120, 80, {
+    left: [0, 1, 2, 3], // left 라는 이미 정해진 왼쪽 방향으로 걸을 때의 애니메이션 이름
+    up: [0, 1, 2, 3], // 그 이름에 쓰일 전체 파일에서의 인덱스 넘버들
+    down: [0, 1, 2, 3],
+    right: [0, 1, 2, 3],
+}, 8);
+
+let dolphinDead = ScriptApp.loadSpritesheet('dolphin-dead.png', 120, 81);
 
 
 /**
@@ -23,20 +51,35 @@ let _ancientBranchSs = [];
 let ancientBranchM = ScriptApp.loadSpritesheet('ancient-branch-m.png', 75, 50);
 let _ancientBranchMs = [];
 
-let tomb = ScriptApp.loadSpritesheet('tomb.png', 32, 48, {
-    left: [0],  // defined base anim
-    right: [0], // defined base anim
-    up: [0],    // defined base anim
-    down: [0],  // defined base anim
-});
+// 중세
+let medievalPaperS = ScriptApp.loadSpritesheet('medieval-paper-s.png', 30, 30);
+let _medievalPaperSs = [];
+let medievalPaperM = ScriptApp.loadSpritesheet('medieval-paper-m.png', 30, 30);
+let _medievalPaperMs = [];
+let medievalSteel = ScriptApp.loadSpritesheet('medieval-steel.png', 40, 30);
+let _medievalSteels = [];
 
-let dolphin = ScriptApp.loadSpritesheet('dolphin.png', 120, 80, {
-    left: [0, 1, 2, 3], // left 라는 이미 정해진 왼쪽 방향으로 걸을 때의 애니메이션 이름
-    up: [0, 1, 2, 3], // 그 이름에 쓰일 전체 파일에서의 인덱스 넘버들
-    down: [0, 1, 2, 3],
-    right: [0, 1, 2, 3],
-}, 8);
+// 산업화
+let industCoalS = ScriptApp.loadSpritesheet('indust-coal-s.png', 30, 30);
+let _industCoalSs = [];
+let industCoalM = ScriptApp.loadSpritesheet('indust-coal-m.png', 35, 35);
+let _industCoalMs = [];
+let industCoalL = ScriptApp.loadSpritesheet('indust-coal-l.png', 40, 40);
+let _industCoalL = [];
+let industOilS = ScriptApp.loadSpritesheet('indust-oil-s.png', 241, 161);
+let _industOilSs = [];
+let industOilM = ScriptApp.loadSpritesheet('indust-oil-m.png', 120, 80);
+let _industOilMs = [];
+let industOilL = ScriptApp.loadSpritesheet('indust-oil-l.png', 120, 100);
+let _industOilLs = [];
 
+// 현대
+let modernCan = ScriptApp.loadSpritesheet('modern-can.png', 45, 30);
+let _modernCans = [];
+let modernPlastic = ScriptApp.loadSpritesheet('modern-plastic.png', 45, 55);
+let _modernPlastics = [];
+let modernVinyl = ScriptApp.loadSpritesheet('modern-vinyl.png', 54, 56);
+let _modernVinyls = [];
 
 const STATE_INIT = 3000;
 const STATE_READY = 3001;
@@ -176,7 +219,7 @@ ScriptApp.onJoinPlayer.Add(function(p) {
         p.moveSpeed = 20;
 
         // change sprite image
-        // p.sprite = tomb;
+        // p.sprite = dolphinDead;
 
         // when player property changed have to call this method
         // 플레이어 속성 변경 시 반드시 호출하여 업데이트 한다.
@@ -208,10 +251,20 @@ ScriptApp.onObjectTouched.Add(function(sender, x, y, tileID) {
     if (sender.tag.alive && !sender.tag.shield) {
         sender.tag.hp--;
 
+        if(sender.tag.hp == 2) {
+            sender.sprite = dolphinTwoLife;
+            sender.sendUpdated();
+        }
+
+        if(sender.tag.hp == 1) {
+            sender.sprite = dolphinOneLife;
+            sender.sendUpdated();
+        }
+
         if(sender.tag.hp == 0) {
             sender.title = null;
             sender.tag.alive = false;
-            sender.sprite = tomb;
+            sender.sprite = dolphinDead;
             sender.moveSpeed = 40;
             sender.sendUpdated();
         } else {
@@ -240,8 +293,6 @@ ScriptApp.onObjectTouched.Add(function(sender, x, y, tileID) {
     //         }
     //     }
     // }
-
-
 });
 
 // when the game block is pressed event
@@ -259,14 +310,14 @@ ScriptApp.onDestroy.Add(function() {
  * @param trashType 쓰레기종류 문자열
  * @param speed 속도
  */
-function moveTrash(dt, trashType = 'trash', speed = 0.08) {
+function moveTrash(dt, trashType = 'trash', speed = 0.08, generateLevel = 5) {
 
     if(trashSpeedLevel != TRASH_SPEED_LEVEL) return ;
 
     const trashList = `_${trashType}s`;
     _genTime -= dt;
-    if(_genTime <= 0) {
-        _genTime = Math.random() * (TRASH_GENERATE_LEVEL - (_level * 0.05)); //
+    if(_genTime <= 0) { // 시대별로 generateLevel 조정해주면 될 듯
+        _genTime = Math.random() * (generateLevel - (_level * 0.05)); //
 
         let b = [Math.floor((ScriptMap.height-8) * Math.random()) + 8,-1];
 
@@ -329,7 +380,7 @@ ScriptApp.onUpdate.Add(function(dt) {
             ScriptApp.showCenterLabel(`돌고래를 살려줘!!`);
             for(let i in _players) {
                 let p = _players[i];
-                p.sprite = dolphin;
+                p.sprite = dolphinThreeLife;
                 p.sendUpdated();
             }
 
@@ -350,8 +401,32 @@ ScriptApp.onUpdate.Add(function(dt) {
             trashSpeedLevel++;
             if(trashSpeedLevel > TRASH_SPEED_LEVEL) trashSpeedLevel = 1;
             // todo : 여기서 단계 플래그 만들어서 적용하기
-            moveTrash(dt, 'ancientBranchS', 0.08);
-            moveTrash(dt, 'ancientBranchM', 0.15); // 0.08내외로 속도 조정하기
+            switch (currentStageLevel) {
+                case 'ANCIENT':
+                    moveTrash(dt, 'ancientBranchS', 0.08, 5);
+                    moveTrash(dt, 'ancientBranchM', 0.15, 5); // 0.08내외로 속도 조정하기
+                    break;
+                case 'MEDIEVAL':
+                    moveTrash(dt, 'medievalPaperS', 0.08, 6);
+                    moveTrash(dt, 'medievalPaperM', 0.15, 6);
+                    moveTrash(dt, 'medievalSteel', 0.10, 6);
+                    break;
+                case 'INDUST':
+                    moveTrash(dt, 'industCoalS', 0.15, 7);
+                    moveTrash(dt, 'industCoalM', 0.15, 7);
+                    moveTrash(dt, 'industCoalL', 0.15, 7);
+                    moveTrash(dt, 'industOilS', 0.15, 7);
+                    moveTrash(dt, 'industOilM', 0.15, 7);
+                    moveTrash(dt, 'industOilL', 0.15, 7);
+                    break;
+                case 'MODERN':
+                    moveTrash(dt, 'modernCan', 0.2, 4);
+                    moveTrash(dt, 'modernPlastic', 0.2, 4);
+                    moveTrash(dt, 'modernVinyl', 0.2, 4);
+                    break;
+                default:
+                    break;
+            }
 
             for (let i in _players) {
                 let p = _players[i];
