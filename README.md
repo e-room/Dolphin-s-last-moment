@@ -1,8 +1,18 @@
-# ZEP Script App Template
+# Dolphin's last moment!
 
-Template for ZEP Script app.
+How did dolphins become extinct?
 
-## Directory Structure
+
+## 🌐 Demo
+You can play games [here](https://zep.us/play/2YqEKe)!
+
+## 💻 Tech Stack
+- Javascript
+- Node.js
+- [ZEP Script](https://docs-kr.zep.us/creator/zep-script)
+
+
+## 📁 Directory Structure
 
 ```
 📦Project Root
@@ -21,25 +31,4 @@ Template for ZEP Script app.
 - `tsconfig.json`: TypeScript configuration file.
 - `yarn.lock`: Yarn lock file.
 
-## Usage
 
-### Build the project
-
-You need to build the project before you can archive your project.
-
-```bash
-yarn build
-```
-
-### Archive the project
-
-Archive the project by running the following command. You can upload the generated project archive in the [ZEP desktop website](https://zep.us/me/apps/).
-
-```bash
-yarn archive
-```
-
-### ZEP Script API Documentation
-
-- [English](https://docs.zep.us/zep-script)
-- [Korean](https://docs-kr.zep.us/zep-script)
