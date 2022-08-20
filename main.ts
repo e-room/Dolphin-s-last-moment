@@ -4,12 +4,24 @@
 
 import "zep-script";
 
+
+const TRASH_GENERATE_LEVEL = 5; // 숫자가 높을수록 쓰레기의 양이 줄어듬 (실수)
+const TRASH_SPEED_LEVEL = 2; // 숫자가 높을수록 쓰레기의 이동속도가 느려짐 (정수)
+let trashSpeedLevel = 1;
+
+
+
 /**
  * Trash Objects
  * 고대 : 나뭇가지
  */
+// 고대
 let trash = ScriptApp.loadSpritesheet('poop.png', 48, 43, [0], 16);
-let branch = ScriptApp.loadSpritesheet('branch.png', 32, 32)
+let _trashs = [];
+let ancientBranchS = ScriptApp.loadSpritesheet('ancient-branch-s.png', 65, 40);
+let _ancientBranchSs = [];
+let ancientBranchM = ScriptApp.loadSpritesheet('ancient-branch-m.png', 75, 50);
+let _ancientBranchMs = [];
 
 let tomb = ScriptApp.loadSpritesheet('tomb.png', 32, 48, {
     left: [0],  // defined base anim
@@ -39,11 +51,6 @@ let _levelAddTimer = 0;
 let _start = false;
 let _timer = 90;
 
-/**
- * Trash Lists
- */
-let _trashs = [];
-let _branchs = [];
 let _stateTimer = 0;
 
 let _genTime = 0;
@@ -114,10 +121,11 @@ function startState(state)
             ScriptApp.showCenterLabel("Game Start");
             break;
         case STATE_JUDGE:
-            for(let i in _trashs) {
-                let b = _trashs[i];
-                ScriptMap.putObject(b[1], b[0], null);
-            }
+            // todo : 여기서 오브젝트 날리기
+            // for(let i in _trashs) {
+            //     let b = _trashs[i];
+            //     ScriptMap.putObject(b[1], b[0], null);
+            // }
             break;
         case STATE_END:
             _start = false;
@@ -239,10 +247,10 @@ ScriptApp.onObjectTouched.Add(function(sender, x, y, tileID) {
 // when the game block is pressed event
 // 게임 블록을 밟았을 때 호출되는 이벤트
 ScriptApp.onDestroy.Add(function() {
-    for(let i in _trashs) {
-        let b = _trashs[i];
-        ScriptMap.putObject(b[1], b[0], null);
-    }
+    // for(let i in _trashs) {
+    //     let b = _trashs[i];
+    //     ScriptMap.putObject(b[1], b[0], null);
+    // }
 });
 
 /**
@@ -252,18 +260,23 @@ ScriptApp.onDestroy.Add(function() {
  * @param speed 속도
  */
 function moveTrash(dt, trashType = 'trash', speed = 0.08) {
+
+    if(trashSpeedLevel != TRASH_SPEED_LEVEL) return ;
+
     const trashList = `_${trashType}s`;
     _genTime -= dt;
     if(_genTime <= 0) {
-        _genTime = Math.random() * (0.5 - (_level * 0.05));
+        _genTime = Math.random() * (TRASH_GENERATE_LEVEL - (_level * 0.05)); //
 
-        let b = [Math.floor(ScriptMap.height * Math.random()),-1];
+        let b = [Math.floor((ScriptMap.height-8) * Math.random()) + 8,-1];
 
         eval(trashList).push(b);
         if(b[1] >= 0)
             ScriptMap.putObject(b[1], b[0], eval(trashType), { // put 쓰레기
                 overlap: true,
             });
+
+
     }
 
     _dropTime -= dt;
@@ -334,8 +347,11 @@ ScriptApp.onUpdate.Add(function(dt) {
             }
             break;
         case STATE_PLAYING: // 게임 중
-            moveTrash(dt, 'trash', 0.08);
-            moveTrash(dt, 'branch', 0.12); // 0.08내외로 속도 조정하기
+            trashSpeedLevel++;
+            if(trashSpeedLevel > TRASH_SPEED_LEVEL) trashSpeedLevel = 1;
+            // todo : 여기서 단계 플래그 만들어서 적용하기
+            moveTrash(dt, 'ancientBranchS', 0.08);
+            moveTrash(dt, 'ancientBranchM', 0.15); // 0.08내외로 속도 조정하기
 
             for (let i in _players) {
                 let p = _players[i];
