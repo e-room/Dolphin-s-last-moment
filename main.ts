@@ -18,7 +18,12 @@ let tomb = ScriptApp.loadSpritesheet('tomb.png', 32, 48, {
     down: [0],  // defined base anim
 });
 
-let dolphin = ScriptApp.loadSpritesheet('dolphin.png', 32, 32);
+let dolphin = ScriptApp.loadSpritesheet('dolphin.png', 120, 80, {
+    left: [0, 1, 2, 3], // left 라는 이미 정해진 왼쪽 방향으로 걸을 때의 애니메이션 이름
+    up: [0, 1, 2, 3], // 그 이름에 쓰일 전체 파일에서의 인덱스 넘버들
+    down: [0, 1, 2, 3],
+    right: [0, 1, 2, 3],
+}, 8);
 
 
 const STATE_INIT = 3000;
