@@ -4,7 +4,7 @@ How did dolphins become extinct?
 
 
 ## 🌐 Demo
-You can play games [here](https://zep.us/play/2YqEKe)!
+You can play games [here](https://zep.us/play/8Z3wPq)!
 
 ## 💻 Tech Stack
 - Javascript
